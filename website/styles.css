@@ -70,6 +70,44 @@ body {
   filter: brightness(1.05);
 }
 
+.control-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.control-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.control-grid input {
+  border: 1px solid rgba(16, 42, 67, 0.2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #fff;
+  color: var(--text);
+}
+
+.control-grid button {
+  border: 0;
+  border-radius: 9px;
+  background: #1f6f8b;
+  color: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.control-grid button:hover {
+  filter: brightness(1.06);
+}
+
 #game-container {
   width: 100%;
   min-height: 600px;

@@ -19,7 +19,9 @@ const COLORS = {
   mineStroke: 0x7f1d1d,
   flagged: 0xf4a259,
   flaggedStroke: 0x9a5d1b,
-  hoverStroke: 0xf0b429
+  hoverStroke: 0xf0b429,
+  hole: 0x1f2937,
+  holeStroke: 0x0f172a
 };
 
 export class HexMinesGame extends Phaser.Scene {
@@ -50,7 +52,8 @@ export class HexMinesGame extends Phaser.Scene {
     const restartButton = document.getElementById("restart");
     restartButton?.addEventListener("click", () => this.restartGame());
 
-    this.drawBoard();
+    this.bindControls();
+    this.regenerateBoardFromLogic();
     this.updateHud("Ready");
 
     this.timerEvent = this.time.addEvent({
@@ -65,7 +68,127 @@ export class HexMinesGame extends Phaser.Scene {
     this.startMs = 0;
     this.elapsedSeconds = 0;
     this.updateHud("Ready");
-    this.redrawAll();
+    this.regenerateBoardFromLogic();
+  }
+
+  private bindControls(): void {
+    const defaultMapButton = document.getElementById("default-map-btn") as HTMLButtonElement | null;
+    const sizedMapButton = document.getElementById("sized-map-btn") as HTMLButtonElement | null;
+    const randomMapButton = document.getElementById("random-map-btn") as HTMLButtonElement | null;
+    const setMinesButton = document.getElementById("set-mines-btn") as HTMLButtonElement | null;
+
+    defaultMapButton?.addEventListener("click", () => {
+      const mines = this.readInputNumber("mines-input", 10, 1, 300);
+      this.logic.generateDefaultMap(mines);
+      this.startMs = 0;
+      this.elapsedSeconds = 0;
+      this.updateHud("Ready");
+      this.syncInputsFromConfig();
+      this.regenerateBoardFromLogic();
+    });
+
+    sizedMapButton?.addEventListener("click", () => {
+      const rows = this.readInputNumber("rows-input", 12, 2, 40);
+      const cols = this.readInputNumber("cols-input", 6, 2, 40);
+      const mines = this.readInputNumber("mines-input", 10, 1, 300);
+      this.logic.generateSizedMap(rows, cols, mines);
+      this.startMs = 0;
+      this.elapsedSeconds = 0;
+      this.updateHud("Ready");
+      this.syncInputsFromConfig();
+      this.regenerateBoardFromLogic();
+    });
+
+    randomMapButton?.addEventListener("click", () => {
+      const rows = this.readInputNumber("rows-input", 12, 2, 40);
+      const cols = this.readInputNumber("cols-input", 6, 2, 40);
+      const mines = this.readInputNumber("mines-input", 10, 1, 300);
+      const holes = this.readInputNumber("holes-input", 8, 0, 300);
+      this.logic.generateRandomHoleMap(rows, cols, mines, holes);
+      this.startMs = 0;
+      this.elapsedSeconds = 0;
+      this.updateHud("Ready");
+      this.syncInputsFromConfig();
+      this.regenerateBoardFromLogic();
+    });
+
+    setMinesButton?.addEventListener("click", () => {
+      const mines = this.readInputNumber("mines-input", 10, 1, 300);
+      this.logic.setMineCount(mines);
+      this.startMs = 0;
+      this.elapsedSeconds = 0;
+      this.updateHud("Ready");
+      this.syncInputsFromConfig();
+      this.redrawAll();
+    });
+
+    this.syncInputsFromConfig();
+  }
+
+  private syncInputsFromConfig(): void {
+    const config = this.logic.getConfig();
+    this.writeInputNumber("rows-input", config.rows);
+    this.writeInputNumber("cols-input", config.cols);
+    this.writeInputNumber("mines-input", config.mineCount);
+  }
+
+  private readInputNumber(inputId: string, fallback: number, min: number, max: number): number {
+    const input = document.getElementById(inputId) as HTMLInputElement | null;
+    if (!input) {
+      return fallback;
+    }
+
+    const value = Number.parseInt(input.value, 10);
+    if (Number.isNaN(value)) {
+      return fallback;
+    }
+
+    return Math.min(max, Math.max(min, value));
+  }
+
+  private writeInputNumber(inputId: string, value: number): void {
+    const input = document.getElementById(inputId) as HTMLInputElement | null;
+    if (input) {
+      input.value = String(value);
+    }
+  }
+
+  private regenerateBoardFromLogic(): void {
+    this.clearBoard();
+    this.hoveredTileId = null;
+    this.updateLayoutForCurrentMap();
+    this.drawBoard();
+  }
+
+  private clearBoard(): void {
+    for (const display of this.displayByTileId.values()) {
+      display.shape.destroy();
+      display.label.destroy();
+    }
+    this.displayByTileId.clear();
+  }
+
+  private updateLayoutForCurrentMap(): void {
+    const config = this.logic.getConfig();
+    const viewportWidth = 940;
+    const viewportHeight = 720;
+    const maxWidth = viewportWidth - 120;
+    const maxHeight = viewportHeight - 100;
+
+    const widthFactor = Math.sqrt(3) * (config.cols + 0.5);
+    const heightFactor = Math.max(2, 1.5 * (config.rows - 1) + 2);
+    const sizeByWidth = maxWidth / widthFactor;
+    const sizeByHeight = maxHeight / heightFactor;
+    const size = Math.max(14, Math.min(36, Math.floor(Math.min(sizeByWidth, sizeByHeight))));
+
+    const boardWidth = Math.sqrt(3) * size * (config.cols + 0.5);
+    const boardHeight = size * (1.5 * (config.rows - 1) + 2);
+
+    this.layout = {
+      size,
+      originX: Math.max(24, (viewportWidth - boardWidth) / 2 + (Math.sqrt(3) * size) / 2),
+      originY: Math.max(24, (viewportHeight - boardHeight) / 2 + size)
+    };
   }
 
   private drawBoard(): void {
@@ -82,13 +205,17 @@ export class HexMinesGame extends Phaser.Scene {
         .setDepth(1);
 
       const label = this.add
-        .text(centerX-this.layout.size, centerY-this.layout.size, "", {
+        .text(centerX - this.layout.size, centerY - this.layout.size, "", {
           fontFamily: "Trebuchet MS",
           fontSize: "20px",
           color: "#102a43"
         })
         .setOrigin(0.5)
         .setDepth(3);
+
+      if (tile.isHole) {
+        shape.disableInteractive();
+      }
 
       shape.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
         if (pointer.rightButtonDown()) {
@@ -195,10 +322,28 @@ export class HexMinesGame extends Phaser.Scene {
       return;
     }
 
-    view.label.setOrigin(0.5).setPosition(view.centerX-this.layout.size, view.centerY-this.layout.size).setVisible(true);
+    view.label
+      .setOrigin(0.5)
+      .setPosition(view.centerX - this.layout.size, view.centerY - this.layout.size)
+      .setVisible(true);
 
     let strokeWidth = 2;
     let strokeColor = COLORS.hiddenStroke;
+
+    if (tile.isHole) {
+      view.shape.setFillStyle(COLORS.hole);
+      strokeColor = COLORS.holeStroke;
+      view.label.setText("").setVisible(false);
+
+      if (this.hoveredTileId === tile.id) {
+        strokeWidth = 4;
+        strokeColor = COLORS.hoverStroke;
+      }
+
+      view.shape.setScale(this.getHoverCompensationScale(strokeWidth));
+      view.shape.setStrokeStyle(strokeWidth, strokeColor);
+      return;
+    }
 
     if (!tile.revealed) {
       if (tile.flagged) {
@@ -230,12 +375,16 @@ export class HexMinesGame extends Phaser.Scene {
     if (this.hoveredTileId === tile.id) {
       strokeWidth = 5;
       strokeColor = COLORS.hoverStroke;
-      view.shape.setScale(1.04);
-    } else {
-      view.shape.setScale(1);
     }
 
+    view.shape.setScale(this.getHoverCompensationScale(strokeWidth));
     view.shape.setStrokeStyle(strokeWidth, strokeColor);
+  }
+
+  private getHoverCompensationScale(hoverStrokeWidth: number): number {
+    const radius = this.layout.size;
+    const scale = radius / (radius + hoverStrokeWidth / 2);
+    return Math.max(0.82, scale);
   }
 
   private refreshTimer(): void {
@@ -256,6 +405,23 @@ export class HexMinesGame extends Phaser.Scene {
     }
   }
 
+  private updateMineCounter(): void {
+    const mineCounter = document.getElementById("mine-counter");
+    if (!mineCounter) {
+      return;
+    }
+
+    const flaggedCount = this.logic.getTiles().reduce((count, tile) => {
+      if (!tile.isHole && tile.flagged) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+
+    const remainingMines = this.logic.getConfig().mineCount - flaggedCount;
+    mineCounter.textContent = `Mines: ${remainingMines}`;
+  }
+
   private updateHud(status: string): void {
     const stateLabel = document.getElementById("state");
     if (stateLabel) {
@@ -265,5 +431,7 @@ export class HexMinesGame extends Phaser.Scene {
     if (status === "Ready") {
       this.updateTimer(0);
     }
+
+    this.updateMineCounter();
   }
 }

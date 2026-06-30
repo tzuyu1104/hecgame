@@ -12,8 +12,31 @@
         <h1>Hexagon Miner</h1>
         <div class="status-row">
           <div id="timer" class="pill">Time: 0s</div>
+          <div id="mine-counter" class="pill">Mines: 10</div>
           <div id="state" class="pill">State: Ready</div>
           <button id="restart" type="button">Restart</button>
+        </div>
+        <div class="control-grid">
+          <label>
+            Rows
+            <input id="rows-input" type="number" min="2" max="40" value="12" />
+          </label>
+          <label>
+            Cols
+            <input id="cols-input" type="number" min="2" max="40" value="6" />
+          </label>
+          <label>
+            Holes
+            <input id="holes-input" type="number" min="0" max="120" value="8" />
+          </label>
+          <label>
+            Mines
+            <input id="mines-input" type="number" min="1" max="300" value="10" />
+          </label>
+          <button id="default-map-btn" type="button">Default Map 6x12</button>
+          <button id="sized-map-btn" type="button">Generate Sized Map</button>
+          <button id="random-map-btn" type="button">Generate Random Hole Map</button>
+          <button id="set-mines-btn" type="button">Set Mine Count</button>
         </div>
       </header>
       <main>

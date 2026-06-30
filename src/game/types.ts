@@ -2,6 +2,7 @@ export interface Tile {
   id: number;
   row: number;
   col: number;
+  isHole: boolean;
   hasMine: boolean;
   revealed: boolean;
   flagged: boolean;
@@ -19,6 +20,14 @@ export interface GameConfig {
   rows: number;
   cols: number;
   mineCount: number;
+}
+
+export interface MapOptions {
+  rows: number;
+  cols: number;
+  mineCount: number;
+  holeCount?: number;
+  randomHoles?: boolean;
 }
 
 export interface RevealResult {
