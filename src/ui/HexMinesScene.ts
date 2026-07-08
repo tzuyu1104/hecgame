@@ -217,13 +217,13 @@ export class HexMinesGame extends Phaser.Scene {
       const localPoints = points.flatMap((point) => [point.x - centerX, point.y - centerY]);
 
       const shape = this.add
-        .polygon(centerX, centerY, localPoints, COLORS.hidden)
+        .polygon(centerX, centerY, localPoints, COLORS.hidden).setOrigin(0, 0)
         .setStrokeStyle(2, COLORS.hiddenStroke)
         .setInteractive(new Phaser.Geom.Polygon(localPoints), Phaser.Geom.Polygon.Contains)
         .setDepth(1);
 
       const label = this.add
-        .text(centerX - this.layout.size, centerY - this.layout.size, "", {
+        .text(centerX, centerY, "", {
           fontFamily: "Trebuchet MS",
           fontSize: "20px",
           color: "#102a43"
@@ -352,7 +352,7 @@ export class HexMinesGame extends Phaser.Scene {
 
     view.label
       .setOrigin(0.5)
-      .setPosition(view.centerX - this.layout.size, view.centerY - this.layout.size)
+      .setPosition(view.centerX, view.centerY)
       .setVisible(true);
 
     let strokeWidth = 2;
@@ -364,12 +364,20 @@ export class HexMinesGame extends Phaser.Scene {
       view.label.setText("").setVisible(false);
 
       if (this.hoveredTileId === tile.id) {
-        strokeWidth = 12;
+        strokeWidth = 4;
         strokeColor = COLORS.hoverStroke;
       }
 
       view.shape.setScale(this.getHoverCompensationScale(strokeWidth));
       view.shape.setStrokeStyle(strokeWidth, strokeColor);
+
+      /*console.log(
+        view.shape.x,
+        view.shape.y,
+        view.shape.displayOriginX,
+        view.shape.displayOriginY,
+        view.shape.getBounds()
+      );*/
       return;
     }
 
@@ -401,12 +409,23 @@ export class HexMinesGame extends Phaser.Scene {
     }
 
     if (this.hoveredTileId === tile.id) {
-      strokeWidth = 12;
+      strokeWidth = 4;
       strokeColor = COLORS.hoverStroke;
     }
 
     view.shape.setScale(this.getHoverCompensationScale(strokeWidth));
+    //view.shape.setScale(0.8);
     view.shape.setStrokeStyle(strokeWidth, strokeColor);
+    //view.shape.setStrokeStyle(2, strokeColor);
+    /*console.log(
+      view.shape.x,
+      view.shape.y,
+      view.shape.displayOriginX,
+      view.shape.displayOriginY,
+      view.shape.getBounds(),
+      view.shape.geom.points,
+      view.shape.pathData,
+    );*/
   }
 
   private getHoverCompensationScale(hoverStrokeWidth: number): number {

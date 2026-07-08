@@ -18,8 +18,7 @@ const game = new Phaser.Game({
   backgroundColor: "#eef4fb",
   scene: [HexMinesGame],
   scale: {
-    mode: Phaser.Scale.NONE,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    mode: Phaser.Scale.NONE
   }
 });
 
