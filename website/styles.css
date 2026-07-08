@@ -134,3 +134,47 @@ canvas {
     min-height: 500px;
   }
 }
+
+/* Debug state bar -- temporary debug option */
+.debug-bar {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(16, 42, 67, 0.18);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(16, 42, 67, 0.06);
+  font-size: 0.85rem;
+}
+
+.debug-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.debug-section label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.debug-section input {
+  border: 1px solid rgba(16, 42, 67, 0.2);
+  border-radius: 6px;
+  padding: 4px 6px;
+  background: #fff;
+  color: var(--text);
+  width: 70px;
+  font-size: 0.85rem;
+}
+
+.debug-text {
+  color: var(--text);
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

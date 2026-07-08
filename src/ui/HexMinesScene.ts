@@ -32,6 +32,8 @@ export class HexMinesGame extends Phaser.Scene {
   private startMs = 0;
   private elapsedSeconds = 0;
   private hoveredTileId: number | null = null;
+  // Debug state bar -- temporary debug option
+  private debugTileId: number | null = null;
 
   constructor() {
     super("HexMinesScene");
@@ -51,6 +53,11 @@ export class HexMinesGame extends Phaser.Scene {
 
     const restartButton = document.getElementById("restart");
     restartButton?.addEventListener("click", () => this.restartGame());
+    // Debug: add listeners for debug row/col inputs -- temporary debug option
+    const debugRowInput = document.getElementById("debug-tile-row") as HTMLInputElement | null;
+    const debugColInput = document.getElementById("debug-tile-col") as HTMLInputElement | null;
+    debugRowInput?.addEventListener("input", () => this.onDebugInputChange());
+    debugColInput?.addEventListener("input", () => this.onDebugInputChange());
 
     this.bindControls();
     this.regenerateBoardFromLogic();
@@ -125,6 +132,14 @@ export class HexMinesGame extends Phaser.Scene {
     this.syncInputsFromConfig();
   }
 
+
+  // Debug: called when debug row/col inputs change -- temporary debug option
+  private onDebugInputChange(): void {
+    const debugId = this.getDebugTileIdFromInputs();
+    this.debugTileId = debugId;
+    this.updateDebugBar(debugId);
+  }
+
   private syncInputsFromConfig(): void {
     const config = this.logic.getConfig();
     this.writeInputNumber("rows-input", config.rows);
@@ -156,6 +171,9 @@ export class HexMinesGame extends Phaser.Scene {
   private regenerateBoardFromLogic(): void {
     this.clearBoard();
     this.hoveredTileId = null;
+    // Debug: clear debug state on board regeneration -- temporary debug option
+    this.debugTileId = null;
+    this.updateDebugBar(null);
     this.updateLayoutForCurrentMap();
     this.drawBoard();
   }
@@ -235,6 +253,11 @@ export class HexMinesGame extends Phaser.Scene {
         }
 
         this.paintTile(tile);
+        // Debug: update bar when selected tile is hovered on -- temporary debug option
+        const debugId = this.getDebugTileIdFromInputs();
+        if (debugId !== null && debugId === tile.id) {
+          this.updateDebugBar(debugId);
+        }
       });
 
       shape.on(Phaser.Input.Events.POINTER_OUT, () => {
@@ -244,6 +267,11 @@ export class HexMinesGame extends Phaser.Scene {
 
         this.hoveredTileId = null;
         this.paintTile(tile);
+        // Debug: update bar when selected tile is hovered off -- temporary debug option
+        const debugId = this.getDebugTileIdFromInputs();
+        if (debugId !== null && debugId === tile.id) {
+          this.updateDebugBar(debugId);
+        }
       });
 
       this.displayByTileId.set(tile.id, { shape, label, centerX, centerY });
@@ -336,7 +364,7 @@ export class HexMinesGame extends Phaser.Scene {
       view.label.setText("").setVisible(false);
 
       if (this.hoveredTileId === tile.id) {
-        strokeWidth = 4;
+        strokeWidth = 12;
         strokeColor = COLORS.hoverStroke;
       }
 
@@ -373,7 +401,7 @@ export class HexMinesGame extends Phaser.Scene {
     }
 
     if (this.hoveredTileId === tile.id) {
-      strokeWidth = 5;
+      strokeWidth = 12;
       strokeColor = COLORS.hoverStroke;
     }
 
@@ -383,8 +411,73 @@ export class HexMinesGame extends Phaser.Scene {
 
   private getHoverCompensationScale(hoverStrokeWidth: number): number {
     const radius = this.layout.size;
-    const scale = radius / (radius + hoverStrokeWidth / 2);
+    const scale = radius / (radius + hoverStrokeWidth / Math.sqrt(3));
     return Math.max(0.82, scale);
+  }
+
+
+  // Debug helper -- temporary debug option
+  // Read row/col from input elements and convert to tile ID
+  private getDebugTileIdFromInputs(): number | null {
+    const rowInput = document.getElementById("debug-tile-row") as HTMLInputElement | null;
+    const colInput = document.getElementById("debug-tile-col") as HTMLInputElement | null;
+    if (!rowInput || !colInput) {
+      return null;
+    }
+
+    const row = Number.parseInt(rowInput.value, 10);
+    const col = Number.parseInt(colInput.value, 10);
+
+    if (Number.isNaN(row) || Number.isNaN(col)) {
+      return null;
+    }
+
+    const config = this.logic.getConfig();
+    if (row < 0 || row >= config.rows || col < 0 || col >= config.cols) {
+      return null;
+    }
+
+    return row * config.cols + col;
+  }
+
+  // Update debug bar with tile coordinates and hex vertex info -- temporary debug option
+  private updateDebugBar(tileId: number | null): void {
+    const tileInfoEl = document.getElementById("debug-tile-info") as HTMLElement | null;
+    const vertexInfoEl = document.getElementById("debug-vertex-info") as HTMLElement | null;
+
+    if (!tileInfoEl || !vertexInfoEl) {
+      return;
+    }
+
+    if (tileId === null) {
+      tileInfoEl.textContent = "No cell selected";
+      vertexInfoEl.textContent = "";
+      return;
+    }
+
+    const tile = this.logic.getTiles()[tileId];
+    if (!tile) {
+      tileInfoEl.textContent = "Invalid tile";
+      vertexInfoEl.textContent = "";
+      return;
+    }
+
+    // Compute absolute coordinates of tile center
+    const points = tilePolygon(tile, this.layout);
+    const centerX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const centerY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+    // Build tile info text -- temporary debug option
+    const tileInfo = `ID: ${tileId} | Row: ${tile.row}, Col: ${tile.col}\nAbsolute: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})\nState: ${tile.revealed ? (tile.hasMine ? "Mine" : "Safe") : (tile.flagged ? "Flagged" : "Hidden")}`;
+
+    // Build vertex info -- temporary debug option
+    const vertexLines = ["Vertices:"];
+    for (let i = 0; i < points.length; i++) {
+      vertexLines.push(`  V${i}: (${points[i].x.toFixed(1)}, ${points[i].y.toFixed(1)})`);
+    }
+
+    tileInfoEl.textContent = tileInfo;
+    vertexInfoEl.textContent = vertexLines.join("\n");
   }
 
   private refreshTimer(): void {

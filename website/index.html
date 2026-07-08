@@ -39,6 +39,21 @@
           <button id="set-mines-btn" type="button">Set Mine Count</button>
         </div>
       </header>
+      <!-- Debug state bar -- temporary debug option -->
+      <div class="debug-bar">
+        <div class="debug-section">
+          <label for="debug-tile-row">Tile Row</label>
+          <input id="debug-tile-row" type="number" min="0" value="0" />
+          <label for="debug-tile-col">Tile Col</label>
+          <input id="debug-tile-col" type="number" min="0" value="0" />
+        </div>
+        <div class="debug-section">
+          <span id="debug-tile-info" class="debug-text">No cell selected</span>
+        </div>
+        <div class="debug-section">
+          <span id="debug-vertex-info" class="debug-text"></span>
+        </div>
+      </div>
       <main>
         <div id="game-container"></div>
       </main>
