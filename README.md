@@ -39,7 +39,7 @@ Watch mode during development:
 npm run watch
 ```
 
-Serve static app through existing server file:
+Serve static app (optional):
 
 ```bash
 npm run serve
@@ -51,7 +51,7 @@ Open in browser:
 
 ## Project Structure
 
-- `serverexpress.js` (kept unchanged in project root)
+- `serverexpress.js` (not necessary, static files open directly in browser)
 - `website/index.html`
 - `website/styles.css`
 - `website/dist/game.js` (generated)
